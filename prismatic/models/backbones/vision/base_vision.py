@@ -24,12 +24,27 @@ from torchvision.transforms import Compose, Resize
 
 
 # === Utility Functions for Monkey-Patching ===
-def unpack_tuple(fn: Callable[[Any], Tuple[Any]]) -> Callable[[Any], Any]:
+def trim_tokens(fn: Callable[[Any], Tuple[Any]], num_tokens: int) -> Callable[[Any], Any]:
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         result = fn(*args, **kwargs)
-        return result[0] if isinstance(result, tuple) else result
+        return result[:, num_tokens:]
 
     return wrapper
+
+
+def patch_featurizer_forward(
+    featurizer: VisionTransformer, skip_layers: int, prune_norm: bool, trim_prefix: bool
+) -> VisionTransformer:
+    # Prune vision backbone
+    if prune_norm or skip_layers > 1:
+        featurizer.prune_intermediate_layers(indices=[len(featurizer.blocks) - 1 - skip_layers], prune_norm=prune_norm)
+
+    # Modify forward function
+    if trim_prefix:
+        featurizer.forward = trim_tokens(featurizer.forward_features, featurizer.num_prefix_tokens)
+    else:
+        featurizer.forward = featurizer.forward_features
+    return featurizer
 
 
 # === Interface for an Image Transform ===
@@ -121,11 +136,8 @@ class TimmViTBackbone(VisionBackbone, ABC):
         self.featurizer.eval()
 
         # Monkey-Patch the `forward()` function of the featurizer to ensure FSDP-compatibility
-        #   => Note: By default set `get_intermediate_layers` to return the *SECOND-TO-LAST* layer patches!
-        #   => TODO (siddk) Remove after resolution of https://github.com/pytorch/pytorch/issues/109385
-        self.featurizer.forward = unpack_tuple(
-            partial(self.featurizer.get_intermediate_layers, n={len(self.featurizer.blocks) - 2})
-        )
+        #   => Note: By default returns the *SECOND-TO-LAST* layer patches!
+        patch_featurizer_forward(self.featurizer, skip_layers=1, prune_norm=True, trim_prefix=True)
 
         # Validation =>> for now, this class *only* supports TIMM Vision Transformers (but can be extended!)
         assert isinstance(self.featurizer, VisionTransformer), (

@@ -15,7 +15,12 @@ from timm.models.vision_transformer import Block, VisionTransformer
 from torch.distributed.fsdp.wrap import _module_wrap_policy, _or_policy, transformer_auto_wrap_policy
 from torchvision.transforms import Compose, Resize
 
-from prismatic.models.backbones.vision.base_vision import ImageTransform, LetterboxPad, VisionBackbone, unpack_tuple
+from prismatic.models.backbones.vision.base_vision import (
+    ImageTransform,
+    LetterboxPad,
+    VisionBackbone,
+    patch_featurizer_forward,
+)
 
 # Registry =>> Supported DinoCLIP Pairs (as TIMM identifiers)
 DINOCLIP_VISION_BACKBONES = {
@@ -54,14 +59,9 @@ class DinoCLIPViTBackbone(VisionBackbone):
         self.clip_featurizer.eval()
 
         # Monkey-Patch the `forward()` function of the featurizers to ensure FSDP-compatibility
-        #   => Note: By default set `get_intermediate_layers` to return the *SECOND-TO-LAST* layer patches!
-        #   => TODO (siddk) Remove after resolution of https://github.com/pytorch/pytorch/issues/109385
-        self.dino_featurizer.forward = unpack_tuple(
-            partial(self.dino_featurizer.get_intermediate_layers, n={len(self.dino_featurizer.blocks) - 2})
-        )
-        self.clip_featurizer.forward = unpack_tuple(
-            partial(self.clip_featurizer.get_intermediate_layers, n={len(self.clip_featurizer.blocks) - 2})
-        )
+        #   => Note: By default returns the *SECOND-TO-LAST* layer patches!
+        patch_featurizer_forward(self.dino_featurizer, skip_layers=1, prune_norm=True, trim_prefix=True)
+        patch_featurizer_forward(self.clip_featurizer, skip_layers=1, prune_norm=True, trim_prefix=True)
 
         # Get Configs for _both_ Featurizers =>> Note :: Override default image size for larger resolution models
         self.dino_data_cfg = timm.data.resolve_model_data_config(self.dino_featurizer)
