@@ -39,7 +39,7 @@ def patch_featurizer_forward(
     if prune_norm or skip_layers > 1:
         featurizer.prune_intermediate_layers(indices=[len(featurizer.blocks) - 1 - skip_layers], prune_norm=prune_norm)
 
-    # Modify forward function
+    # Modify `forward()` function
     if trim_prefix:
         featurizer.forward = trim_tokens(featurizer.forward_features, featurizer.num_prefix_tokens)
     else:
@@ -211,8 +211,17 @@ class TimmViTBackbone(VisionBackbone, ABC):
         return self.featurizer.embed_dim
 
     @property
+    def num_heads(self) -> int:
+        return self.featurizer.blocks[0].attn.num_heads
+
+    @property
     def num_patches(self) -> int:
         return self.featurizer.patch_embed.num_patches
+
+    @property
+    def num_prefix_tokens(self) -> int:
+        #   => Note: `forward()` patch above removes prefix tokens, need to be careful with this!
+        return self.featurizer.num_prefix_tokens
 
     @property
     def half_precision_dtype(self) -> torch.dtype:

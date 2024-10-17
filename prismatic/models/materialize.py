@@ -11,6 +11,7 @@ from transformers import PreTrainedTokenizerBase
 
 from prismatic.models.backbones.llm import LLaMa2LLMBackbone, LLMBackbone, MistralLLMBackbone, PhiLLMBackbone
 from prismatic.models.backbones.vision import (
+    AlignedViTBackbone,
     CLIPViTBackbone,
     DinoCLIPViTBackbone,
     DinoSigLIPViTBackbone,
@@ -47,6 +48,15 @@ VISION_BACKBONES = {
     # === Fused Backbones ===
     "dinoclip-vit-l-336px": {"cls": DinoCLIPViTBackbone, "kwargs": {"default_image_size": 336}},
     "dinosiglip-vit-so-384px": {"cls": DinoSigLIPViTBackbone, "kwargs": {"default_image_size": 384}},
+
+    # === Locality-Aligned Backbones ===
+    "in1k-vit-l-aligned": {"cls": AlignedViTBackbone, "kwargs": {"default_image_size": 224}},
+    "clip-vit-b-aligned": {"cls": AlignedViTBackbone, "kwargs": {"default_image_size": 224}},
+    "clip-vit-l-aligned": {"cls": AlignedViTBackbone, "kwargs": {"default_image_size": 224}},
+    "clip-vit-l-336px-aligned": {"cls": AlignedViTBackbone, "kwargs": {"default_image_size": 336}},
+    "siglip-vit-b-aligned": {"cls": AlignedViTBackbone, "kwargs": {"default_image_size": 224}},
+    "siglip-vit-so400m-aligned": {"cls": AlignedViTBackbone, "kwargs": {"default_image_size": 224}},
+    "siglip-vit-so400m-384px-aligned": {"cls": AlignedViTBackbone, "kwargs": {"default_image_size": 384}},
 }
 
 

@@ -1,3 +1,4 @@
+from .aligned_vit import AlignedViTBackbone
 from .base_vision import ImageTransform, VisionBackbone
 from .clip_vit import CLIPViTBackbone
 from .dinoclip_vit import DinoCLIPViTBackbone

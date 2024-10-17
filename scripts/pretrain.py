@@ -30,6 +30,7 @@ from typing import Optional, Tuple, Union
 import draccus
 import torch
 import torch.distributed as dist
+import wandb
 import yaml
 
 from prismatic.conf import DatasetConfig, DatasetRegistry, ModelConfig, ModelRegistry
@@ -76,10 +77,8 @@ class PretrainConfig:
 
     # Tracking Parameters
     trackers: Tuple[str, ...] = ("jsonl", "wandb")                  # Trackers to initialize (if W&B, add config!)
-    # wandb_project: str = "prismatic"                                # Name of W&B project (default: `prismatic`)
-    # wandb_entity: Optional[str] = None                              # Name of W&B entity (default: None)
-    wandb_project: str = "onyx-vlms"
-    wandb_entity: str = "stanford-voltron"
+    wandb_project: str = "prismatic"                                # Name of W&B project (default: `prismatic`)
+    wandb_entity: str = "iancovert"                                 # Name of W&B entity (default: "iancovert")
 
     def __post_init__(self) -> None:
         """Set optimization parameters based on `stage` in {"align", "finetune"}."""
@@ -237,4 +236,7 @@ def pretrain(cfg: PretrainConfig) -> None:
 
 
 if __name__ == "__main__":
+    # Check for .wandb_token
+    if Path(".wandb_token").exists():
+        wandb.login(key=Path(".wandb_token").read_text().strip())
     pretrain()

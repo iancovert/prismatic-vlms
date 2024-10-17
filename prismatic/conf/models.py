@@ -489,6 +489,149 @@ class Prism_7B_DINOSigLIP_224px(Exp_7B_One_Stage):
     finetune_epochs: int = 2
 
 
+# === Locality-Aligned Models ===
+@dataclass
+class Base_Config(Exp_7B_One_Stage):
+    model_id: str = "base-224px+7b"
+    vision_backbone_id: str = "in1k-vit-l"
+    llm_backbone_id: str = "llama2-7b-pure"
+    arch_specifier: str = "no-align+gelu-mlp"
+    image_resize_strategy: str = "resize-naive"
+    finetune_per_device_batch_size: int = 16
+    finetune_epochs: int = 2
+
+
+# Baseline models
+@dataclass
+class Baseline_CLIP_ViT_L_p14_336px(Base_Config):
+    model_id: str = "baseline-clip-vit-l-336px+7b"
+    vision_backbone_id: str = "clip-vit-l-336px"
+
+
+@dataclass
+class Baseline_SigLIP_ViT_SO400M_p14_384px(Base_Config):
+    model_id: str = "baseline-siglip-vit-so400m-384px+7b"
+    vision_backbone_id: str = "siglip-vit-so400m-384px"
+
+
+# Feature fusion baselines
+@dataclass
+class Baseline_DINOCLIP_ViT_L_p14_336px(Base_Config):
+    model_id: str = "baseline-dinoclip-vit-l-336px+7b"
+    vision_backbone_id: str = "dinoclip-vit-l-336px"
+    arch_specifier: str = "no-align+fused-gelu-mlp"
+
+
+@dataclass
+class Baseline_DINOSigLIP_ViT_SO400M_p14_384px(Base_Config):
+    model_id: str = "baseline-dinosiglip-vit-so400m-384px+7b"
+    vision_backbone_id: str = "dinosiglip-vit-so-384px"
+    arch_specifier: str = "no-align+fused-gelu-mlp"
+
+
+# Locality-aligned models with MLP adapter
+@dataclass
+class Aligned_CLIP_ViT_L_p14_336px(Base_Config):
+    model_id: str = "aligned-clip-vit-l-336px+7b"
+    vision_backbone_id: str = "clip-vit-l-336px-aligned"
+
+
+@dataclass
+class Aligned_SigLIP_ViT_SO400M_p14_384px(Base_Config):
+    model_id: str = "aligned-siglip-vit-so400m-384px+7b"
+    vision_backbone_id: str = "siglip-vit-so400m-384px-aligned"
+
+
+# Locality-aligned models with decoder adapter
+@dataclass
+class Aligned_Decoder_CLIP_ViT_L_p14_336px(Base_Config):
+    model_id: str = "aligned-decoder-clip-vit-l-336px+7b"
+    vision_backbone_id: str = "clip-vit-l-336px-aligned"
+    arch_specifier: str = "no-align+pretrained-decoder"
+
+
+@dataclass
+class Aligned_Decoder_SigLIP_ViT_SO400M_p14_384px(Base_Config):
+    model_id: str = "aligned-decoder-siglip-vit-so400m-384px+7b"
+    vision_backbone_id: str = "siglip-vit-so400m-384px-aligned"
+    arch_specifier: str = "no-align+pretrained-decoder"
+
+
+# Random init transformer baseline
+@dataclass
+class Baseline_Transformer_CLIP_ViT_L_p14_336px(Base_Config):
+    model_id: str = "baseline-transformer-clip-vit-l-336px+7b"
+    vision_backbone_id: str = "clip-vit-l-336px"
+    arch_specifier: str = "no-align+transformer"
+
+
+@dataclass
+class Baseline_Transformer_SigLIP_ViT_SO400M_p14_384px(Base_Config):
+    model_id: str = "baseline-transformer-siglip-vit-so400m-384px+7b"
+    vision_backbone_id: str = "siglip-vit-so400m-384px"
+    arch_specifier: str = "no-align+transformer"
+
+
+# Truncated adapter ablations
+@dataclass
+class Baseline_Truncated_CLIP_ViT_L_p14_336px(Base_Config):
+    model_id: str = "baseline-truncated-clip-vit-l-336px+7b"
+    vision_backbone_id: str = "clip-vit-l-336px"
+    arch_specifier: str = "no-align+truncated"
+
+
+@dataclass
+class Baseline_Truncated_SigLIP_ViT_SO400M_p14_384px(Base_Config):
+    model_id: str = "baseline-truncated-siglip-vit-so400m-384px+7b"
+    vision_backbone_id: str = "siglip-vit-so400m-384px"
+    arch_specifier: str = "no-align+truncated"
+
+
+@dataclass
+class Aligned_Truncated_CLIP_ViT_L_p14_336px(Base_Config):
+    model_id: str = "aligned-truncated-clip-vit-l-336px+7b"
+    vision_backbone_id: str = "clip-vit-l-336px-aligned"
+    arch_specifier: str = "no-align+truncated"
+
+
+@dataclass
+class Aligned_Truncated_SigLIP_ViT_SO400M_p14_384px(Base_Config):
+    model_id: str = "aligned-truncated-siglip-vit-so400m-384px+7b"
+    vision_backbone_id: str = "siglip-vit-so400m-384px-aligned"
+    arch_specifier: str = "no-align+truncated"
+
+
+# Models trained with more data
+#   =>> Note :: Run with `--dataset.type "llava-lvis4v-lrv"`
+@dataclass
+class Baseline_External_CLIP_ViT_L_p14_336px(Base_Config):
+    model_id: str = "baseline-external-clip-vit-l-336px+7b"
+    vision_backbone_id: str = "clip-vit-l-336px"
+
+
+#   =>> Note :: Run with `--dataset.type "llava-lvis4v-lrv"`
+@dataclass
+class Baseline_External_SigLIP_ViT_SO400M_p14_384px(Base_Config):
+    model_id: str = "baseline-external-siglip-vit-so400m-384px+7b"
+    vision_backbone_id: str = "siglip-vit-so400m-384px"
+
+
+#   =>> Note :: Run with `--dataset.type "llava-lvis4v-lrv"`
+@dataclass
+class Aligned_Decoder_External_CLIP_ViT_L_p14_336px(Base_Config):
+    model_id: str = "aligned-decoder-external-clip-vit-l-336px+7b"
+    vision_backbone_id: str = "clip-vit-l-336px-aligned"
+    arch_specifier: str = "no-align+pretrained-decoder"
+
+
+#   =>> Note :: Run with `--dataset.type "llava-lvis4v-lrv"`
+@dataclass
+class Aligned_Decoder_External_SigLIP_ViT_SO400M_p14_384px(Base_Config):
+    model_id: str = "aligned-decoder-external-siglip-vit-so400m-384px+7b"
+    vision_backbone_id: str = "siglip-vit-so400m-384px-aligned"
+    arch_specifier: str = "no-align+pretrained-decoder"
+
+
 # === Define a Model Registry Enum for Reference & Validation ===
 @unique
 class ModelRegistry(Enum):
@@ -565,6 +708,34 @@ class ModelRegistry(Enum):
     # === Inference Optimized :: 224px Prism Models ===
     PRISM_DINOSIGLIP_224PX_CONTROLLED_7B = Prism_7B_DINOSigLIP_224px_Controlled
     PRISM_DINOSIGLIP_224PX_7B = Prism_7B_DINOSigLIP_224px
+
+    # === Locality Alignment Configurations ===
+    BASE_CONFIG = Base_Config
+
+    BASELINE_CLIP_336PX = Baseline_CLIP_ViT_L_p14_336px
+    BASELINE_SIGLIP_384PX = Baseline_SigLIP_ViT_SO400M_p14_384px
+
+    BASELINE_DINOCLIP_336PX = Baseline_DINOCLIP_ViT_L_p14_336px
+    BASELINE_DINOSIGLIP_384PX = Baseline_DINOSigLIP_ViT_SO400M_p14_384px
+
+    ALIGNED_CLIP_336PX = Aligned_CLIP_ViT_L_p14_336px
+    ALIGNED_SIGLIP_384PX = Aligned_SigLIP_ViT_SO400M_p14_384px
+
+    ALIGNED_DECODER_CLIP_336PX = Aligned_Decoder_CLIP_ViT_L_p14_336px
+    ALIGNED_DECODER_SIGLIP_384PX = Aligned_Decoder_SigLIP_ViT_SO400M_p14_384px
+
+    BASELINE_TRANSFORMER_CLIP_336PX = Baseline_Transformer_CLIP_ViT_L_p14_336px
+    BASELINE_TRANSFORMER_SIGLIP_384PX = Baseline_Transformer_SigLIP_ViT_SO400M_p14_384px
+
+    BASELINE_TRUNCATED_CLIP_336PX = Baseline_Truncated_CLIP_ViT_L_p14_336px
+    BASELINE_TRUNCATED_SIGLIP_384PX = Baseline_Truncated_SigLIP_ViT_SO400M_p14_384px
+    ALIGNED_TRUNCATED_CLIP_336PX = Aligned_Truncated_CLIP_ViT_L_p14_336px
+    ALIGNED_TRUNCATED_SIGLIP_384PX = Aligned_Truncated_SigLIP_ViT_SO400M_p14_384px
+
+    BASELINE_EXTERNAL_CLIP_336PX = Baseline_External_CLIP_ViT_L_p14_336px
+    BASELINE_EXTERNAL_SIGLIP_384PX = Baseline_External_SigLIP_ViT_SO400M_p14_384px
+    ALIGNED_DECODER_EXTERNAL_CLIP_336PX = Aligned_Decoder_External_CLIP_ViT_L_p14_336px
+    ALIGNED_DECODER_EXTERNAL_SIGLIP_384PX = Aligned_Decoder_External_SigLIP_ViT_SO400M_p14_384px
 
     @property
     def model_id(self) -> str:

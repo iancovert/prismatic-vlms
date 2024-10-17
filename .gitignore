@@ -147,3 +147,10 @@ dmypy.json
 # Caches and Datasets
 cache/
 data/
+
+# Training runs
+runs
+*.out
+
+# Vision model checkpoints
+vision_checkpoints

@@ -1,4 +1,21 @@
-# Prismatic VLMs
+# Note: Forked Repository
+
+[![arXiv](https://img.shields.io/badge/arXiv-2410.11087-df2a2a.svg?style=for-the-badge)](https://arxiv.org/abs/2410.11087)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.4.0-EE4C2C.svg?style=for-the-badge&logo=pytorch)](https://pytorch.org/get-started/locally/)
+[![Transformers](https://img.shields.io/badge/Transformers-4.44.0-yellow.svg?style=for-the-badge&logo=huggingface)](https://huggingface.co/docs/transformers/en/index)
+[![Timm](https://img.shields.io/badge/TIMM-1.0.8-black.svg?style=for-the-badge&logo=huggingface)](https://github.com/huggingface/pytorch-image-models)
+[![Python](https://img.shields.io/badge/python-3.10-blue?style=for-the-badge)](https://www.python.org)
+[![License](https://img.shields.io/github/license/iancovert/prismatic-vlms?style=for-the-badge)](LICENSE)
+
+This is a fork of the original Prismatic VLMs [repository](https://github.com/TRI-ML/prismatic-vlms) designed for use in the paper "Locality Alignment Improves Vision-Language Models" ([available here](https://arxiv.org/abs/2410.11087)). Our work proposes a locality alignment post-training stage for ViTs, and demonstrates that locality-aligned backbones (e.g., CLIP and SigLIP) can improve the performance of vision-language models across various benchmarks. Our changes to the original repository are as follows:
+
+- Update several packages to their latest versions, including PyTorch, Transformers, and Timm (see `pyproject.toml` and other minor changes)
+- Support checkpoints for locality-aligned backbones (see `prismatic/models/backbones/vision/aligned_vit.py`)
+- Add new configurations for the locality-aligned models (see `prismatic/conf/models.py`)
+- Support a transformer-based vision-language adapter, as well as the option to initialize it from the locality alignment procedure's decoder module (see `prismatic/util/nn_utils.py` and `prismatic/models/vlms/prismatic.py`)
+
+
+# Original README: Prismatic VLMs
 
 [![arXiv](https://img.shields.io/badge/arXiv-2402.07865-df2a2a.svg?style=for-the-badge)](https://arxiv.org/abs/2402.07865)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.2.1-EE4C2C.svg?style=for-the-badge&logo=pytorch)](https://pytorch.org/get-started/locally/)

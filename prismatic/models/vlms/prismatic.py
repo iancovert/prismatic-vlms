@@ -17,15 +17,22 @@ from typing import Callable, Dict, List, Optional, Type, Union
 
 import torch
 from PIL import Image
+from timm.models.vision_transformer import VisionTransformer
 from torch.distributed.fsdp.wrap import _module_wrap_policy, _or_policy
 from transformers.modeling_outputs import CausalLMOutputWithPast
 
 from prismatic.models.backbones.llm import LLMBackbone
 from prismatic.models.backbones.llm.prompting import PromptBuilder
-from prismatic.models.backbones.vision import VisionBackbone
+from prismatic.models.backbones.vision import AlignedViTBackbone, VisionBackbone
 from prismatic.models.vlms.base_vlm import VLM
 from prismatic.overwatch import initialize_overwatch
-from prismatic.util.nn_utils import FusedMLPProjector, LinearProjector, MLPProjector
+from prismatic.util.nn_utils import (
+    FusedMLPProjector,
+    LinearProjector,
+    MLPProjector,
+    TransformerProjector,
+    truncated_transformer_projector,
+)
 
 # Initialize Overwatch =>> Wraps `logging.Logger`
 overwatch = initialize_overwatch(__name__)
@@ -36,6 +43,8 @@ IGNORE_INDEX = -100
 
 
 class PrismaticVLM(VLM):
+    _supports_cache_class = False
+
     def __init__(
         self,
         model_id: str,
@@ -57,14 +66,59 @@ class PrismaticVLM(VLM):
 
         # Initialize Projection (Adapter) based on `arch_specifier`
         self.arch_specifier = arch_specifier
-        if arch_specifier == "linear":
+        preserve_prefix_tokens = False
+        if arch_specifier.endswith("linear"):
             self.projector = LinearProjector(vision_backbone.embed_dim, llm_backbone.embed_dim)
         elif arch_specifier.endswith("fused-gelu-mlp"):
             self.projector = FusedMLPProjector(vision_backbone.embed_dim, llm_backbone.embed_dim)
         elif arch_specifier.endswith("gelu-mlp"):
             self.projector = MLPProjector(vision_backbone.embed_dim, llm_backbone.embed_dim)
+        elif arch_specifier.endswith("transformer"):
+            #   => Note: Only works when `vision_backbone` supports `num_heads`, `num_patches` and `num_prefix_tokens`
+            assert (
+                hasattr(vision_backbone, "num_heads")
+                and hasattr(vision_backbone, "num_patches")
+                and hasattr(vision_backbone, "num_prefix_tokens")
+            )
+            self.projector = TransformerProjector(
+                embed_dim=vision_backbone.embed_dim,
+                num_heads=vision_backbone.num_heads,
+                num_patch_tokens=vision_backbone.num_patches,
+                num_prefix_tokens=vision_backbone.num_prefix_tokens,
+                output_size=llm_backbone.embed_dim,
+                num_layers=2,
+                qkv_bias=True,
+            )
+            preserve_prefix_tokens = True
+        elif arch_specifier.endswith("pretrained-decoder"):
+            #   => Note: Only works when `vision_backbone` is AlignedViTBackbone
+            assert isinstance(vision_backbone, AlignedViTBackbone)
+            self.projector = TransformerProjector(
+                embed_dim=vision_backbone.embed_dim,
+                num_heads=vision_backbone.num_heads,
+                num_patch_tokens=vision_backbone.num_patches,
+                num_prefix_tokens=vision_backbone.num_prefix_tokens,
+                output_size=llm_backbone.embed_dim,
+                num_layers=2,  # NOTE: Hardcoded, matches all saved checkpoints
+                qkv_bias=True,  # NOTE: Hardcoded, matches all saved checkpoints
+                checkpoint_name=vision_backbone.checkpoint_name,
+            )
+            preserve_prefix_tokens = True
+        elif arch_specifier.endswith("truncated"):
+            #   => Note: Only works when `vision_backbone.featurizer` is VisionTransformer
+            assert hasattr(vision_backbone, "featurizer") and isinstance(vision_backbone.featurizer, VisionTransformer)
+            self.projector = truncated_transformer_projector(
+                vision_backbone.featurizer, llm_backbone.embed_dim, num_layers=2
+            )
+            preserve_prefix_tokens = True
         else:
             raise ValueError(f"PrismaticVLM with `{arch_specifier = }` is not supported!")
+
+        # Override featurizer's `forward()` patch to preserve prefix tokens
+        #   => Note: Transformer-based projectors require prefix tokens
+        if preserve_prefix_tokens:
+            vision_backbone.featurizer.forward = vision_backbone.featurizer.forward_features
+            overwatch.info("Overriding `forward()` patch to preserve prefix tokens!", ctx_level=1)
 
         # Trackers
         self.vision_backbone_requires_grad = False
